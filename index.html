@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tính GPA Kỳ Vọng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to bottom, #f0fdf4, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Poppins', sans-serif;
+      padding: 1rem;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.5s ease-in;
+    }
+    .result-box {
+      background: #f3f4f6;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .result-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .result-box.hidden {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    #calculateBtn {
+      background: #16a34a;
+      transition: all 0.3s ease;
+    }
+    #calculateBtn:hover {
+      transform: scale(1.05);
+      background: #15803d;
+    }
+    input {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #d1d5db;
+      transition: all 0.3s ease;
+    }
+    input:focus {
+      border-bottom: 2px solid #16a34a;
+      outline: none;
+    }
+    footer {
+      color: #6b7280;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 1rem 0;
+      width: 100%;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 2rem;
+      }
+      p {
+        font-size: 0.9rem;
+      }
+      .card {
+        padding: 1.25rem;
+      }
+      input {
+        padding: 0.5rem 0;
+      }
+    }
+  </style>
+</head>
+<body class="text-gray-900">
+  <div class="max-w-md w-full mx-auto text-center p-6">
+    <h1 class="text-4xl font-semibold mb-4">Tính GPA Kỳ Vọng</h1>
+    <p class="text-lg mb-8 text-gray-600">Nhập thông tin để biết GPA cần đạt cho các tín chỉ còn lại</p>
+
+    <div class="card p-6">
+      <div class="mb-5">
+        <label for="creditsTaken" class="block text-left text-sm font-medium mb-1 text-gray-700">Số tín chỉ đã học</label>
+        <input type="number" id="creditsTaken" min="0" step="1" class="w-full p-2 text-gray-900 placeholder-gray-500" placeholder="Ví dụ: 60">
+      </div>
+      <div class="mb-5">
+        <label for="currentGPA" class="block text-left text-sm font-medium mb-1 text-gray-700">GPA hiện tại (0.0 - 4.0)</label>
+        <input type="number" id="currentGPA" min="0" max="4" step="0.1" class="w-full p-2 text-gray-900 placeholder-gray-500" placeholder="Ví dụ: 3.2">
+      </div>
+      <div class="mb-5">
+        <label for="creditsRemaining" class="block text-left text-sm font-medium mb-1 text-gray-700">Số tín chỉ còn lại</label>
+        <input type="number" id="creditsRemaining" min="0" step="1" class="w-full p-2 text-gray-900 placeholder-gray-500" placeholder="Ví dụ: 30">
+      </div>
+      <div class="mb-5">
+        <label for="targetGPA" class="block text-left text-sm font-medium mb-1 text-gray-700">GPA kỳ vọng (0.0 - 4.0)</label>
+        <input type="number" id="targetGPA" min="0" max="4" step="0.1" class="w-full p-2 text-gray-900 placeholder-gray-500" placeholder="Ví dụ: 3.5">
+      </div>
+      <button id="calculateBtn" class="text-white px-6 py-2 rounded-md font-medium w-full">Tính toán</button>
+    </div>
+
+    <div id="result" class="result-box hidden mt-6 p-5 text-base">
+      <p id="resultText" class="font-medium"></p>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Phát Đại. All rights reserved.
+  </footer>
+
+  <script>
+    const creditsTakenInput = document.getElementById('creditsTaken');
+    const currentGPAInput = document.getElementById('currentGPA');
+    const creditsRemainingInput = document.getElementById('creditsRemaining');
+    const targetGPAInput = document.getElementById('targetGPA');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const resultDiv = document.getElementById('result');
+    const resultText = document.getElementById('resultText');
+
+    // Khôi phục dữ liệu từ localStorage
+    const savedData = JSON.parse(localStorage.getItem('gpaCalculatorData'));
+    if (savedData) {
+      creditsTakenInput.value = savedData.creditsTaken || '';
+      currentGPAInput.value = savedData.currentGPA || '';
+      creditsRemainingInput.value = savedData.creditsRemaining || '';
+      targetGPAInput.value = savedData.targetGPA || '';
+      if (savedData.result) {
+        resultText.textContent = savedData.result;
+        resultDiv.classList.remove('hidden');
+        resultDiv.classList.add('show');
+      }
+    }
+
+    calculateBtn.addEventListener('click', () => {
+      // Lấy giá trị đầu vào
+      const creditsTaken = parseFloat(creditsTakenInput.value);
+      const currentGPA = parseFloat(currentGPAInput.value);
+      const creditsRemaining = parseFloat(creditsRemainingInput.value);
+      const targetGPA = parseFloat(targetGPAInput.value);
+
+      // Kiểm tra lỗi
+      if (isNaN(creditsTaken) || creditsTaken < 0) {
+        showResult('Vui lòng nhập số tín chỉ đã học hợp lệ (số dương).', 'text-red-500');
+        return;
+      }
+      if (isNaN(currentGPA) || currentGPA < 0 || currentGPA > 4) {
+        showResult('Vui lòng nhập GPA hiện tại hợp lệ (0.0 - 4.0).', 'text-red-500');
+        return;
+      }
+      if (isNaN(creditsRemaining) || creditsRemaining <= 0) {
+        showResult('Vui lòng nhập số tín chỉ còn lại hợp lệ (số dương).', 'text-red-500');
+        return;
+      }
+      if (isNaN(targetGPA) || targetGPA < 0 || targetGPA > 4) {
+        showResult('Vui lòng nhập GPA kỳ vọng hợp lệ (0.0 - 4.0).', 'text-red-500');
+        return;
+      }
+
+      // Tính GPA cần đạt
+      const totalCredits = creditsTaken + creditsRemaining;
+      const requiredPoints = targetGPA * totalCredits - currentGPA * creditsTaken;
+      const requiredGPA = requiredPoints / creditsRemaining;
+
+      // Kiểm tra tính khả thi
+      let resultMessage;
+      if (requiredGPA > 4) {
+        resultMessage = `Không thể đạt GPA ${targetGPA.toFixed(2)} vì bạn cần đạt GPA ${requiredGPA.toFixed(2)} cho ${creditsRemaining} tín chỉ còn lại, vượt quá mức tối đa 4.0. Hãy thử GPA kỳ vọng thấp hơn.`;
+        showResult(resultMessage, 'text-orange-500');
+      } else if (requiredGPA < 0) {
+        resultMessage = `Bạn đã vượt GPA kỳ vọng ${targetGPA.toFixed(2)}! Với GPA hiện tại ${currentGPA.toFixed(2)}, bạn không cần điểm cao cho ${creditsRemaining} tín chỉ còn lại.`;
+        showResult(resultMessage, 'text-green-500');
+      } else {
+        resultMessage = `Để đạt GPA ${targetGPA.toFixed(2)}, bạn cần đạt GPA trung bình ${requiredGPA.toFixed(2)} cho ${creditsRemaining} tín chỉ còn lại.`;
+        showResult(resultMessage, 'text-green-500');
+      }
+
+      // Lưu vào localStorage
+      localStorage.setItem('gpaCalculatorData', JSON.stringify({
+        creditsTaken: creditsTakenInput.value,
+        currentGPA: currentGPAInput.value,
+        creditsRemaining: creditsRemainingInput.value,
+        targetGPA: targetGPAInput.value,
+        result: resultMessage
+      }));
+    });
+
+    function showResult(message, colorClass) {
+      resultText.textContent = message;
+      resultText.className = `font-medium ${colorClass}`;
+      resultDiv.classList.remove('hidden');
+      resultDiv.classList.add('show');
+      setTimeout(() => {
+        resultDiv.classList.add('hidden');
+        resultDiv.classList.remove('show');
+      }, 15000); // Ẩn sau 15 giây
+    }
+  </script>
+</body>
+</html>
