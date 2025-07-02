@@ -1,2 +1,2 @@
 
-daicool.github.io/tinh-gpa-kyvong
+https://daicool.github.io/tinh-gpa-kyvong
